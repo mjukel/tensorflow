@@ -727,6 +727,7 @@ TfLiteStatus Subgraph::Invoke() {
   for (int execution_plan_index = 0;
        execution_plan_index < execution_plan_.size(); execution_plan_index++) {
     if (execution_plan_index == next_execution_plan_index_to_prepare_) {
+	  LogFormatted(TFLITE_LOG_INFO, "Prepare at index %d", execution_plan_index);
       TF_LITE_ENSURE_STATUS(PrepareOpsAndTensors());
       TF_LITE_ENSURE(&context_, next_execution_plan_index_to_prepare_ >=
                                     execution_plan_index);
@@ -761,6 +762,9 @@ TfLiteStatus Subgraph::Invoke() {
 
     EnsureTensorsVectorCapacity();
     tensor_resized_since_op_invoke_ = false;
+	
+	LogFormatted(TFLITE_LOG_INFO, "Invoking node %d at index %d", node_index, execution_plan_index);
+	
     if (OpInvoke(registration, &node) == kTfLiteError) {
       return ReportOpError(&context_, node, registration, node_index,
                            "failed to invoke");
