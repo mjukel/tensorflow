@@ -13,7 +13,6 @@ load(
     "tf_additional_lib_hdrs",
     "tf_additional_lib_srcs",
     "tf_additional_libdevice_srcs",
-    "tf_additional_minimal_lib_srcs",
     "tf_additional_monitoring_srcs",
     "tf_additional_proto_hdrs",
     "tf_additional_rocdl_deps",
@@ -178,9 +177,8 @@ cc_library(
     name = "dynamic_annotations",
     hdrs = ["dynamic_annotations.h"],
     deps = [
-        ":dynamic_annotations_impl",
         ":platform",
-    ],
+    ] + tf_mobile_aware_deps("dynamic_annotations_impl"),
 )
 
 cc_library(
@@ -219,6 +217,14 @@ cc_library(
 )
 
 cc_library(
+    name = "gif",
+    hdrs = ["gif.h"],
+    deps = [
+        "@gif",
+    ],
+)
+
+cc_library(
     name = "grpc_services",
     hdrs = ["grpc_services.h"],
     deps = [
@@ -226,12 +232,6 @@ cc_library(
         "//tensorflow/core/profiler:profiler_analysis_proto_cc",
         "//tensorflow/core/profiler:profiler_service_proto_cc",
     ],
-)
-
-cc_library(
-    name = "host_info",
-    hdrs = ["host_info.h"],
-    deps = [":types"],
 )
 
 cc_library(
@@ -243,9 +243,31 @@ cc_library(
 )
 
 cc_library(
+    name = "jpeg",
+    hdrs = ["jpeg.h"],
+    deps = [
+        "@libjpeg_turbo//:jpeg",
+    ],
+)
+
+cc_library(
     name = "load_library",
     textual_hdrs = ["load_library.h"],
     deps = tf_platform_helper_deps("load_library_impl"),
+)
+
+cc_library(
+    name = "logger",
+    srcs = ["logger.cc"],
+    hdrs = ["logger.h"],
+    deps = [
+        ":env",
+        ":logging",
+        ":protobuf",
+        "@com_google_absl//absl/base",
+        "@com_google_absl//absl/synchronization",
+        "@com_google_protobuf//:protobuf",
+    ],
 )
 
 cc_library(
@@ -269,9 +291,7 @@ cc_library(
 cc_library(
     name = "mutex",
     textual_hdrs = ["mutex.h"],
-    deps = [
-        ":mutex_impl",
-    ],
+    deps = tf_mobile_aware_deps("mutex_impl"),
 )
 
 cc_library(
@@ -346,6 +366,15 @@ cc_library(
         "platform_strings_computed.h",
     ],
     hdrs = ["platform_strings.h"],
+)
+
+cc_library(
+    name = "png",
+    hdrs = ["png.h"],
+    deps = [
+        ":platform",
+        "@png",
+    ],
 )
 
 cc_library(
@@ -616,6 +645,7 @@ filegroup(
             "**/stream_executor.h",
             "**/env_time.cc",
             "**/logger.cc",
+            "**/mutex.cc",
             "**/logging.cc",
             "**/human_readable_json.cc",
             "**/rocm.h",
@@ -713,6 +743,7 @@ filegroup(
             "**/monitoring.cc",
             "**/cuda_libdevice_path.cc",
             "**/logger.cc",
+            "**/mutex.cc",
             "**/logging.cc",
             "**/human_readable_json.cc",
             "**/rocm_rocdl_path.cc",
@@ -734,12 +765,6 @@ filegroup(
 filegroup(
     name = "legacy_test_srcs",
     srcs = tf_additional_test_srcs(),
-    visibility = ["//tensorflow/core:__pkg__"],
-)
-
-filegroup(
-    name = "legacy_minimal_lib_srcs",
-    srcs = tf_additional_minimal_lib_srcs(),
     visibility = ["//tensorflow/core:__pkg__"],
 )
 

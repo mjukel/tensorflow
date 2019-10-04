@@ -54,7 +54,7 @@ def register_extension_info(**kwargs):
 # not contain rc or alpha, only numbers.
 # Also update tensorflow/core/public/version.h
 # and tensorflow/tools/pip_package/setup.py
-VERSION = "1.14.0"
+VERSION = "2.0.0"
 VERSION_MAJOR = VERSION.split(".")[0]
 
 def if_v2(a):
@@ -1506,7 +1506,8 @@ def tf_mkl_kernel_library(
         hdrs = None,
         deps = None,
         alwayslink = 1,
-        copts = tf_copts(allow_exceptions = True) + tf_openmp_copts()):
+        copts = tf_copts(allow_exceptions = True) + tf_openmp_copts(),
+        **kwargs):
     """A rule to build MKL-based TensorFlow kernel libraries."""
 
     if not bool(srcs):
@@ -1525,7 +1526,7 @@ def tf_mkl_kernel_library(
         )
 
     # -fno-exceptions in nocopts breaks compilation if header modules are enabled.
-    disable_header_modules = ["-use_header_modules"]
+    features = ["-use_header_modules"] + kwargs.pop("features", [])
 
     native.cc_library(
         name = name,
@@ -1534,7 +1535,8 @@ def tf_mkl_kernel_library(
         deps = deps,
         alwayslink = alwayslink,
         copts = copts,
-        features = disable_header_modules,
+        features = features,
+        **kwargs
     )
 
 register_extension_info(
