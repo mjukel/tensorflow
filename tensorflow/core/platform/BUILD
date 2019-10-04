@@ -15,8 +15,6 @@ load(
     "tf_additional_libdevice_srcs",
     "tf_additional_monitoring_srcs",
     "tf_additional_proto_hdrs",
-    "tf_additional_rocdl_deps",
-    "tf_additional_rocdl_srcs",
     "tf_additional_tensor_coding_deps",
     "tf_additional_test_srcs",
     "tf_logging_absl_deps",
@@ -28,8 +26,8 @@ load(
 load(
     "//tensorflow/core/platform:default/build_refactor.bzl",
     "tf_instantiate_platform_libraries",
-    "tf_platform_helper_deps",
     "tf_mobile_aware_deps",
+    "tf_platform_helper_deps",
 )
 load(
     "//tensorflow:tensorflow.bzl",
@@ -67,8 +65,11 @@ tf_instantiate_platform_libraries(names = [
     "notification",
     "platform_port",
     "rocm_rocdl_path",
+    "stacktrace",
+    "stacktrace_handler",
     "strong_hash",
     "subprocess",
+    "test",
     "tracing",
     "types",
     "unbounded_work_queue",
@@ -304,9 +305,8 @@ cc_library(
     name = "notification",
     hdrs = ["notification.h"],
     deps = [
-        ":notification_impl",
         ":platform",
-    ],
+    ] + tf_mobile_aware_deps("notification_impl"),
 )
 
 cc_library(
@@ -455,26 +455,16 @@ cc_library(
 
 cc_library(
     name = "stacktrace",
-    srcs = tf_platform_srcs([
-        "stacktrace.h",
-        "stacktrace.cc",
-    ]),
     hdrs = ["stacktrace.h"],
     deps = [
-        ":abi",
         ":platform",
-        "//tensorflow/core/platform/default/build_config:stacktrace",
-    ],
+    ] + tf_platform_helper_deps("stacktrace_impl"),
 )
 
 cc_library(
     name = "stacktrace_handler",
-    srcs = tf_platform_srcs(["stacktrace_handler.cc"]),
-    hdrs = ["stacktrace_handler.h"],
-    deps = [
-        ":platform",
-        ":stacktrace",
-    ],
+    textual_hdrs = ["stacktrace_handler.h"],
+    deps = tf_platform_helper_deps("stacktrace_handler_impl"),
 )
 
 cc_library(
@@ -562,6 +552,13 @@ cc_library(
         "//tensorflow/core/lib/core:refcount",
         "//tensorflow/core/lib/strings:string_utils",
     ] + tf_additional_tensor_coding_deps(),
+)
+
+cc_library(
+    name = "test",
+    testonly = True,
+    textual_hdrs = ["test.h"],
+    deps = [":test_impl"],
 )
 
 cc_library(
@@ -823,7 +820,6 @@ filegroup(
         "error.h",
         "context.h",
         "fingerprint.h",
-        "notification.h",
         "strong_hash.h",
         "subprocess.h",
         "tracing_impl.h",

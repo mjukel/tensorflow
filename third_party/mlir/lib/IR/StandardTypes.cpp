@@ -341,6 +341,13 @@ MemRefType MemRefType::getImpl(ArrayRef<int64_t> shape, Type elementType,
                                Optional<Location> location) {
   auto *context = elementType.getContext();
 
+  // Check that memref is formed from allowed types.
+  if (!elementType.isIntOrFloat() && !elementType.isa<VectorType>()) {
+    if (location)
+      emitError(*location, "invalid memref element type");
+    return nullptr;
+  }
+
   for (int64_t s : shape) {
     // Negative sizes are not allowed except for `-1` that means dynamic size.
     if (s < -1) {
@@ -485,7 +492,13 @@ static void extractStrides(AffineExpr e, MutableArrayRef<int64_t> strides,
     return;
   }
   if (bin.getKind() == AffineExprKind::Mul) {
-    auto dim = bin.getLHS().cast<AffineDimExpr>();
+    // LHS may be more complex than just a single dim (e.g. multiple syms and
+    // dims). Bail out for now and revisit when we have evidence this is needed.
+    auto dim = bin.getLHS().dyn_cast<AffineDimExpr>();
+    if (!dim) {
+      failed = true;
+      return;
+    }
     auto cst = bin.getRHS().dyn_cast<AffineConstantExpr>();
     if (!cst) {
       strides[dim.getPosition()] = MemRefType::kDynamicStrideOrOffset;

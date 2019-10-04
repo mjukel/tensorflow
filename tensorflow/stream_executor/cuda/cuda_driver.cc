@@ -372,19 +372,16 @@ static port::Status InternalInit() {
   return port::Status::OK();
 }
 
-/* static */ bool GpuDriver::GetDeviceName(CUdevice device,
-                                           string* device_name) {
+/* static */ port::Status GpuDriver::GetDeviceName(CUdevice device,
+                                                   string* device_name) {
   static const size_t kCharLimit = 64;
   absl::InlinedVector<char, 4> chars(kCharLimit);
-  CUresult res = cuDeviceGetName(chars.begin(), kCharLimit - 1, device);
-  if (res != CUDA_SUCCESS) {
-    LOG(ERROR) << "failed to get device name for " << device << ": "
-               << ToString(res);
-    return false;
-  }
+  RETURN_IF_CUDA_RES_ERROR(
+      cuDeviceGetName(chars.begin(), kCharLimit - 1, device),
+      "Failed to get device name");
   chars[kCharLimit - 1] = '\0';
   *device_name = chars.begin();
-  return true;
+  return port::Status::OK();
 }
 
 bool DeviceOptionsToContextFlags(const DeviceOptions& device_options,
@@ -507,16 +504,11 @@ bool DeviceOptionsToContextFlags(const DeviceOptions& device_options,
   CreatedContexts::Remove(context->context());
 }
 
-/* static */ bool GpuDriver::FuncGetAttribute(CUfunction_attribute attribute,
-                                              CUfunction func,
-                                              int* attribute_value) {
-  CUresult res = cuFuncGetAttribute(attribute_value, attribute, func);
-  if (res != CUDA_SUCCESS) {
-    LOG(ERROR) << "failed to query kernel attribute. kernel: " << func
-               << ", attribute: " << attribute;
-    return false;
-  }
-  return true;
+/* static */ port::Status GpuDriver::FuncGetAttribute(
+    CUfunction_attribute attribute, CUfunction func, int* attribute_value) {
+  RETURN_IF_CUDA_RES_ERROR(cuFuncGetAttribute(attribute_value, attribute, func),
+                           "Failed to query kernel attribute: ", attribute);
+  return port::Status::OK();
 }
 
 /* static */ bool GpuDriver::FuncSetCacheConfig(CUfunction function,

@@ -125,6 +125,11 @@ std::string GetCommonDefines(CalculationsPrecision precision) {
   return result;
 }
 
+TensorCodeGenerator::SizeVariablesNames::SizeVariablesNames(
+    const std::string& width_name, const std::string& height_name,
+    const std::string& depth_name)
+    : width(width_name), height(height_name), depth(depth_name) {}
+
 TensorCodeGenerator::TensorCodeGenerator(const std::string& name,
                                          const std::string& uniform_size_name,
                                          const TensorDescriptor& descriptor)
@@ -341,6 +346,18 @@ std::string TensorCodeGenerator::Write(
     case TensorStorageType::UNKNOWN:
       return "";
   }
+}
+
+std::string GetXStrideCorrected(const std::string& src_x,
+                                const std::string& batch_size,
+                                const std::string& stride_x,
+                                const std::string& padding_x) {
+  // TODO(sorokin) check perf and optimize with floor() if needed
+  // int p0 = src_x / batch_size;\n";
+  // int b0 = src_x % batch_size;\n";
+  // return p0 * stride_x * batch_size + b0 + padding_x;\n";
+  return absl::Substitute("((($0) / $1) * $2 * $1 + (($0) % $1) + $3)", src_x,
+                          batch_size, stride_x, padding_x);
 }
 
 TextureAddressMode GetFastestZeroMode(const CLDevice& device) {
